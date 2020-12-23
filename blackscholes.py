@@ -75,7 +75,7 @@ def nr(fx,fpx,x0 = 0.1,e = 0.00001,args = ()):
   '''
   new_result = x0 - fx(*((x0,)+args))/fpx(*((x0,)+args))
 
-  print(new_result)
+  # print(new_result)
 
   if abs(x0 - new_result) > e:
     return nr(fx,fpx,new_result,e,args)
@@ -89,9 +89,12 @@ def bsvol(v,s,k,q,r,t,p):
        where f(vol) is the Black-Scholes function with regard to volatility
        and f'(vol) is Black Scholes vega
   '''
-  return (p - bs(v,s,k,q,r,t) + bsvega(v,s,k,q,r,t)*v)/bsvega(v,s,k,q,r,t)
+  newvol = (p - bs(v,s,k,q,r,t) + bsvega(v,s,k,q,r,t)*v)/bsvega(v,s,k,q,r,t)
+  if newvol < 0 or newvol > 1000:
+    raise Exception('Sorry, Black-Scholes broke.')
+  return newvol
   
-def nrtest(fx,x0 = 0.1,e = 0.0001,counter = 0,args = ()):
+def nrtest(fx,x0 = 0.1,e = 0.0001,args = ()):
   '''modified newton-raphson method for the bsvol() function above
      uses the first order Taylor series
        x_{n+1} = (f(x_{n+1}) - f(x_n) + f'(x_n)*x_n)/f'(x_n)
@@ -105,12 +108,10 @@ def nrtest(fx,x0 = 0.1,e = 0.0001,counter = 0,args = ()):
      x0 must be the first argument of the function!
   '''
   new_result = fx(*(x0,) + args)
-  print(new_result)
-  if abs(x0 - new_result) > e and counter < 1000:
-    return nrtest(fx,new_result,e,counter+1,args)
-  elif counter > 1000:
-    raise Exception("Doesn't converge within 1000 steps!")
+  # print(new_result)
+  if abs(x0 - new_result) > e:
+    return nrtest(fx,new_result,e,args)
   else:
     return new_result
   
-# print('Newton-Raphson Test:',nrtest(bsvol,0.1,0.0001,0,(ts,tk,tq,tr,tt,tp)))
+# print('Newton-Raphson Test:',nrtest(bsvol,0.1,0.0001,(ts,tk,tq,tr,tt,tp)))
