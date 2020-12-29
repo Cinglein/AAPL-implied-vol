@@ -29,6 +29,8 @@ nyse = mcal.get_calendar('NYSE')
 
 aapl = dict()
 
+# currently set up to find ATM options only
+
 if input('Pull new options data from CBOE CSV? (y/n)\n') == 'y':
   cpflag = input('Do you want to look at calls or puts? (c/p)\n').capitalize()
   print('Getting option/underlying price data...')
@@ -36,7 +38,7 @@ if input('Pull new options data from CBOE CSV? (y/n)\n') == 'y':
     if fileList != []:
       df = pd.read_csv(dirName + '/' + fileList[0]).set_index(['quote_date','expiration','strike','option_type'])
       for index in df.index:
-        if index[3] == cpflag:
+        if index[3] == cpflag and abs(index[2] - (df['underlying_bid_eod'][index] + df['underlying_ask_eod'][index])/2) < 1:
           aapl[index] = [(df['bid_eod'][index] + df['ask_eod'][index])/2, 
                          (df['underlying_bid_eod'][index] + df['underlying_ask_eod'][index])/2,
                          0,
@@ -85,14 +87,13 @@ badapples = 0
 for i, row in tqdm(aapl.iterrows()):
   try:
     bsvol = np.append(arr=bsvol,values=bs.nrtest(bs.bsvol,1,0.001,(row[1],i[2],
-                      aapldiv['Amount'][str(3*(int(i[0].split('-')[1])//4)+2),i[0].split('-')[0]],
+                      (1+(aapldiv['Amount'][str(3*(int(i[0].split('-')[1])//4)+2),i[0].split('-')[0]]/row[1]))**4 - 1,
                       float(rfr['Rate'][i[0]])*0.01,
                       row[3]/252,row[0],i[3] == 'C')))
     bsm = np.append(arr=bsm,values=math.log(row[1]/i[2]))
     bsu = np.append(arr=bsu,values=row[1])
     bsk = np.append(arr=bsk,values=i[2])
     bst = np.append(arr=bst,values=row[3])
-    
   except:
     badapples += 1
   # aapldiv['Amount'][str(3*(int(i[0].split('-')[1])//4)+2),i[0].split('-')[0]]
@@ -107,8 +108,9 @@ print('Graphing...')
 
 
 pd.DataFrame({'Implied Vol':bsvol,'ln(spot/strike)':bsm,'Underlying Price':bsu}).plot.scatter(x='ln(spot/strike)',y='Implied Vol',c='Underlying Price',colormap='viridis')
-matplotlib.pyplot.savefig('aaplvol2.png')
-
+matplotlib.pyplot.savefig('aaplvol-atm1.png')
+pd.DataFrame({'Implied Vol':bsvol,'time to expiry':bst,'Underlying Price':bsu}).plot.scatter(x='time to expiry',y='Implied Vol',c='Underlying Price',colormap='viridis')
+matplotlib.pyplot.savefig('aaplvol-atm2.png')
 
 '''
 x = np.array([])
