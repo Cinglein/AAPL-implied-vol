@@ -1,4 +1,4 @@
-See detailed writeup at https://options.cinglein.com/aaplvol.html
+See detailed writeups at https://options.cinglein.com/aaplvol.html and https://options.cinglein.com/aaplvol2.html
 
 aaplvol.py is what I used for the old dataset; it's only there for historical purposes, and no longer works.
 
